@@ -80,7 +80,16 @@
     "namePlaceholder": "请输入组织名称",
     "createSuccess": "组织创建成功",
     "updateSuccess": "组织更新成功",
-    "deleteSuccess": "组织删除成功"
+    "deleteSuccess": "组织删除成功",
+    "fields": {
+      "id": "ID",
+      "name": "名称",
+      "status": "状态"
+    },
+    "status": {
+      "active": "启用",
+      "disabled": "禁用"
+    }
   },
   "projects": {
     "title": "项目管理",
@@ -93,7 +102,13 @@
     "organization": "所属组织",
     "createSuccess": "项目创建成功",
     "updateSuccess": "项目更新成功",
-    "deleteSuccess": "项目删除成功"
+    "deleteSuccess": "项目删除成功",
+    "fields": {
+      "id": "ID",
+      "name": "名称",
+      "organization": "所属组织",
+      "status": "状态"
+    }
   },
   "apiKeys": {
     "title": "API 密钥管理",
@@ -122,7 +137,18 @@
     "effect": "效果",
     "pattern": "匹配模式",
     "allow": "允许",
-    "deny": "拒绝"
+    "deny": "拒绝",
+    "fields": {
+      "id": "ID",
+      "name": "名称",
+      "tokenPrefix": "令牌前缀",
+      "organization": "组织",
+      "project": "项目",
+      "status": "状态",
+      "budget": "预算",
+      "spent": "已使用",
+      "rateLimit": "速率限制"
+    }
   },
   "providerKeys": {
     "title": "提供商密钥配置",
@@ -132,7 +158,13 @@
     "apiKey": "API 密钥",
     "apiKeyPlaceholder": "请输入 API 密钥",
     "enabled": "是否启用",
-    "updateSuccess": "提供商密钥更新成功"
+    "updateSuccess": "提供商密钥更新成功",
+    "fields": {
+      "id": "ID",
+      "name": "名称",
+      "provider": "提供商",
+      "status": "状态"
+    }
   },
   "models": {
     "title": "模型列表",
@@ -145,7 +177,14 @@
     "imageGeneration": "图像生成",
     "contextWindow": "上下文窗口",
     "inputCost": "输入成本",
-    "outputCost": "输出成本"
+    "outputCost": "输出成本",
+    "fields": {
+      "id": "ID",
+      "name": "名称",
+      "family": "模型族",
+      "contextWindow": "上下文窗口",
+      "free": "免费"
+    }
   },
   "logs": {
     "title": "请求日志",
@@ -163,7 +202,15 @@
     "viewDetails": "查看详情",
     "promptTokens": "提示词 Tokens",
     "completionTokens": "补全 Tokens",
-    "totalTokens": "总 Tokens"
+    "totalTokens": "总 Tokens",
+    "fields": {
+      "requestId": "请求 ID",
+      "path": "路径",
+      "provider": "提供商",
+      "httpStatus": "状态码",
+      "latency": "耗时(ms)",
+      "cost": "成本(µ$)"
+    }
   },
   "settings": {
     "title": "系统设置",
@@ -175,6 +222,30 @@
     "newPassword": "新密码",
     "confirmPassword": "确认密码",
     "passwordMismatch": "两次输入的密码不一致",
-    "passwordChanged": "密码修改成功"
+    "passwordChanged": "密码修改成功",
+    "fields": {
+      "userId": "用户 ID",
+      "name": "姓名",
+      "email": "邮箱"
+    }
+  },
+  "table": {
+    "actions": "操作",
+    "noData": "暂无数据"
+  },
+  "buttons": {
+    "create": "创建",
+    "edit": "编辑",
+    "delete": "删除",
+    "save": "保存",
+    "cancel": "取消",
+    "confirm": "确认",
+    "search": "搜索",
+    "reset": "重置",
+    "view": "查看",
+    "copy": "复制"
+  },
+  "validation": {
+    "required": "此字段为必填项"
   }
 }

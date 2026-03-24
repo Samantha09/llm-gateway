@@ -80,7 +80,16 @@
     "namePlaceholder": "Enter organization name",
     "createSuccess": "Organization created successfully",
     "updateSuccess": "Organization updated successfully",
-    "deleteSuccess": "Organization deleted successfully"
+    "deleteSuccess": "Organization deleted successfully",
+    "fields": {
+      "id": "ID",
+      "name": "Name",
+      "status": "Status"
+    },
+    "status": {
+      "active": "Active",
+      "disabled": "Disabled"
+    }
   },
   "projects": {
     "title": "Projects",
@@ -93,7 +102,13 @@
     "organization": "Organization",
     "createSuccess": "Project created successfully",
     "updateSuccess": "Project updated successfully",
-    "deleteSuccess": "Project deleted successfully"
+    "deleteSuccess": "Project deleted successfully",
+    "fields": {
+      "id": "ID",
+      "name": "Name",
+      "organization": "Organization",
+      "status": "Status"
+    }
   },
   "apiKeys": {
     "title": "API Keys",
@@ -122,7 +137,18 @@
     "effect": "Effect",
     "pattern": "Pattern",
     "allow": "Allow",
-    "deny": "Deny"
+    "deny": "Deny",
+    "fields": {
+      "id": "ID",
+      "name": "Name",
+      "tokenPrefix": "Token Prefix",
+      "organization": "Organization",
+      "project": "Project",
+      "status": "Status",
+      "budget": "Budget",
+      "spent": "Spent",
+      "rateLimit": "Rate Limit"
+    }
   },
   "providerKeys": {
     "title": "Provider Keys",
@@ -132,7 +158,13 @@
     "apiKey": "API Key",
     "apiKeyPlaceholder": "Enter API key",
     "enabled": "Enabled",
-    "updateSuccess": "Provider key updated successfully"
+    "updateSuccess": "Provider key updated successfully",
+    "fields": {
+      "id": "ID",
+      "name": "Name",
+      "provider": "Provider",
+      "status": "Status"
+    }
   },
   "models": {
     "title": "Models",
@@ -145,7 +177,14 @@
     "imageGeneration": "Image Generation",
     "contextWindow": "Context Window",
     "inputCost": "Input Cost",
-    "outputCost": "Output Cost"
+    "outputCost": "Output Cost",
+    "fields": {
+      "id": "ID",
+      "name": "Name",
+      "family": "Family",
+      "contextWindow": "Context Window",
+      "free": "Free"
+    }
   },
   "logs": {
     "title": "Request Logs",
@@ -163,7 +202,15 @@
     "viewDetails": "View Details",
     "promptTokens": "Prompt Tokens",
     "completionTokens": "Completion Tokens",
-    "totalTokens": "Total Tokens"
+    "totalTokens": "Total Tokens",
+    "fields": {
+      "requestId": "Request ID",
+      "path": "Path",
+      "provider": "Provider",
+      "httpStatus": "Status",
+      "latency": "Latency(ms)",
+      "cost": "Cost(µ$)"
+    }
   },
   "settings": {
     "title": "Settings",
@@ -175,6 +222,30 @@
     "newPassword": "New Password",
     "confirmPassword": "Confirm Password",
     "passwordMismatch": "Passwords do not match",
-    "passwordChanged": "Password changed successfully"
+    "passwordChanged": "Password changed successfully",
+    "fields": {
+      "userId": "User ID",
+      "name": "Name",
+      "email": "Email"
+    }
+  },
+  "table": {
+    "actions": "Actions",
+    "noData": "No data"
+  },
+  "buttons": {
+    "create": "Create",
+    "edit": "Edit",
+    "delete": "Delete",
+    "save": "Save",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "search": "Search",
+    "reset": "Reset",
+    "view": "View",
+    "copy": "Copy"
+  },
+  "validation": {
+    "required": "This field is required"
   }
 }
