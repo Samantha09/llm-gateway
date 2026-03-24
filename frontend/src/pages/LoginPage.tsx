@@ -1,13 +1,27 @@
 import { useLogin } from "@refinedev/core";
 import { Button, Card, Form, Input, Space, Typography, Alert } from "antd";
-import { LockOutlined, UserOutlined } from "@ant-design/icons";
+import { LockOutlined, UserOutlined, GlobalOutlined } from "@ant-design/icons";
 import { useNavigate } from "react-router";
+import { useTranslation } from "react-i18next";
+import { Dropdown } from "antd";
+import { languages } from "../i18n";
 
 const { Title, Text } = Typography;
 
 export const LoginPage = () => {
   const { mutateAsync, isLoading, error } = useLogin();
   const navigate = useNavigate();
+  const { t, i18n } = useTranslation();
+
+  const currentLang = languages.find(l => l.code === i18n.language) || languages[0];
+
+  const languageItems = languages.map(lang => ({
+    key: lang.code,
+    label: lang.nativeName,
+    onClick: () => {
+      i18n.changeLanguage(lang.code);
+    }
+  }));
 
   const onFinish = async (values: { email: string; password: string }) => {
     console.debug("LoginPage: submit", values);
@@ -15,15 +29,12 @@ export const LoginPage = () => {
       const result = await mutateAsync(values);
       console.debug("LoginPage: login success, result:", result);
 
-      // 获取 redirectTo，如果没有则默认跳转到 dashboard
       const redirectTo = (result as any)?.redirectTo || "/dashboard";
       console.debug("LoginPage: navigating to", redirectTo);
 
-      // 使用 React Router 的 navigate 进行 SPA 导航
       navigate(redirectTo, { replace: true });
     } catch (err) {
       console.debug("LoginPage: login failed", err);
-      /* handled by error state */
     }
   };
 
@@ -40,12 +51,22 @@ export const LoginPage = () => {
     >
       <Card style={{ width: 360, boxShadow: "0 10px 30px rgba(0,0,0,0.15)" }}>
         <Space direction="vertical" size="small" style={{ width: "100%" }}>
-          <Title level={3}>Platform Sign In</Title>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <Title level={3} style={{ margin: 0 }}>{t("auth.loginTitle")}</Title>
+            <Dropdown
+              menu={{ items: languageItems, selectedKeys: [i18n.language] }}
+              placement="bottomRight"
+            >
+              <Button type="text" icon={<GlobalOutlined />} size="small">
+                {currentLang.nativeName}
+              </Button>
+            </Dropdown>
+          </div>
           <Text type="secondary">Use your control-plane credentials to continue.</Text>
           {error && (
             <Alert
               type="error"
-              message="Authentication failed"
+              message={t("auth.loginError")}
               description="Please verify your email and password."
               showIcon
             />
@@ -53,14 +74,14 @@ export const LoginPage = () => {
         </Space>
         <Form layout="vertical" onFinish={onFinish} style={{ marginTop: 24 }}>
           <Form.Item
-            label="Email"
+            label={t("auth.email")}
             name="email"
             rules={[{ required: true, message: "Email is required" }]}
           >
             <Input prefix={<UserOutlined />} placeholder="admin@example.com" />
           </Form.Item>
           <Form.Item
-            label="Password"
+            label={t("auth.password")}
             name="password"
             rules={[{ required: true, message: "Password is required" }]}
           >
@@ -68,7 +89,7 @@ export const LoginPage = () => {
           </Form.Item>
           <Form.Item>
             <Button type="primary" htmlType="submit" block loading={isLoading}>
-              Sign in
+              {t("auth.loginButton")}
             </Button>
           </Form.Item>
         </Form>
