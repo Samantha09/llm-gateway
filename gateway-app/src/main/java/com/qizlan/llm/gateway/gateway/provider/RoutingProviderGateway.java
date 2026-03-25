@@ -116,6 +116,7 @@ public class RoutingProviderGateway implements ProviderGateway {
             case "openai" -> properties.providers().openai().enabled();
             case "anthropic" -> properties.providers().anthropic().enabled();
             case "google" -> properties.providers().google().enabled();
+            case "kimi" -> properties.providers().kimi().enabled();
             default -> false;
         };
     }

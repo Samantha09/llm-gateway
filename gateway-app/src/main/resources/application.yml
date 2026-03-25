@@ -50,6 +50,10 @@ llm:
         enabled: ${GOOGLE_ENABLED:false}
         base-url: ${GOOGLE_BASE_URL:https://generativelanguage.googleapis.com}
         api-key: ${GOOGLE_API_KEY:dev-google-key}
+      kimi:
+        enabled: ${KIMI_ENABLED:false}
+        base-url: ${KIMI_BASE_URL:https://api.moonshot.cn}
+        api-key: ${KIMI_API_KEY:dev-kimi-key}
     routing:
       failure-threshold: 1
       cooldown-millis: 30000

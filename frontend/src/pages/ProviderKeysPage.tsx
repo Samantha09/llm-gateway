@@ -22,6 +22,7 @@ const PROVIDER_OPTIONS = [
   { value: "openai", label: "OpenAI" },
   { value: "anthropic", label: "Anthropic" },
   { value: "google", label: "Google" },
+  { value: "kimi", label: "Kimi CodePlan" },
 ];
 
 export const ProviderKeysPage = () => {

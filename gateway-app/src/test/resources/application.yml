@@ -29,6 +29,10 @@ llm:
         enabled: false
         base-url: http://localhost:18082
         api-key: test-google-key
+      kimi:
+        enabled: false
+        base-url: http://localhost:18083
+        api-key: test-kimi-key
     routing:
       failure-threshold: 1
       cooldown-millis: 30000

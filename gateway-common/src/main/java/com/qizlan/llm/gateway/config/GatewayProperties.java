@@ -25,7 +25,8 @@ public record GatewayProperties(
             String mode,
             Endpoint openai,
             Endpoint anthropic,
-            Endpoint google
+            Endpoint google,
+            Endpoint kimi
     ) {
     }
 
