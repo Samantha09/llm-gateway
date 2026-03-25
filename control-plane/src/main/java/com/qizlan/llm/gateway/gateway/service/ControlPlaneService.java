@@ -5,10 +5,12 @@ import com.qizlan.llm.gateway.persistence.entity.ApiKeyEntity;
 import com.qizlan.llm.gateway.persistence.entity.ApiKeyIamRuleEntity;
 import com.qizlan.llm.gateway.persistence.entity.OrganizationEntity;
 import com.qizlan.llm.gateway.persistence.entity.ProjectEntity;
+import com.qizlan.llm.gateway.persistence.entity.ProviderKeyEntity;
 import com.qizlan.llm.gateway.persistence.repository.ApiKeyIamRuleRepository;
 import com.qizlan.llm.gateway.persistence.repository.ApiKeyRepository;
 import com.qizlan.llm.gateway.persistence.repository.OrganizationRepository;
 import com.qizlan.llm.gateway.persistence.repository.ProjectRepository;
+import com.qizlan.llm.gateway.persistence.repository.ProviderKeyRepository;
 import java.util.List;
 import java.util.Map;
 import org.springframework.stereotype.Service;
@@ -20,6 +22,7 @@ public class ControlPlaneService {
     private final ProjectRepository projectRepository;
     private final ApiKeyRepository apiKeyRepository;
     private final ApiKeyIamRuleRepository apiKeyIamRuleRepository;
+    private final ProviderKeyRepository providerKeyRepository;
     private final ApiKeyTokenService tokenService;
     private final AuditLogService auditLogService;
 
@@ -28,6 +31,7 @@ public class ControlPlaneService {
             ProjectRepository projectRepository,
             ApiKeyRepository apiKeyRepository,
             ApiKeyIamRuleRepository apiKeyIamRuleRepository,
+            ProviderKeyRepository providerKeyRepository,
             ApiKeyTokenService tokenService,
             AuditLogService auditLogService
     ) {
@@ -35,6 +39,7 @@ public class ControlPlaneService {
         this.projectRepository = projectRepository;
         this.apiKeyRepository = apiKeyRepository;
         this.apiKeyIamRuleRepository = apiKeyIamRuleRepository;
+        this.providerKeyRepository = providerKeyRepository;
         this.tokenService = tokenService;
         this.auditLogService = auditLogService;
     }
@@ -283,6 +288,59 @@ public class ControlPlaneService {
             throw new IllegalArgumentException("Unsupported IAM rule effect: " + value);
         }
         return normalized;
+    }
+
+    // Provider Key methods
+
+    public List<ProviderKeyEntity> listProviderKeys() {
+        return providerKeyRepository.findAll();
+    }
+
+    public ProviderKeyEntity createProviderKey(RequestContext context, String name, String providerId, String apiKeyValue, String organizationId) {
+        OrganizationEntity organization = organizationRepository.findById(organizationId)
+                .orElseThrow(() -> new IllegalArgumentException("Unknown organization: " + organizationId));
+        ProviderKeyEntity entity = new ProviderKeyEntity(name, providerId, apiKeyValue, true, organization);
+        ProviderKeyEntity saved = providerKeyRepository.save(entity);
+        auditLogService.record(context, organizationId, "provider_key.create", "provider_key", saved.getId(), null, null, Map.of(
+                "name", saved.getName(),
+                "provider_id", saved.getProviderId(),
+                "active", saved.isActive()
+        ));
+        return saved;
+    }
+
+    public ProviderKeyEntity updateProviderKey(RequestContext context, String id, String name, String apiKeyValue, Boolean active) {
+        ProviderKeyEntity entity = providerKeyRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Unknown provider key: " + id));
+        if (name != null && !name.isBlank()) {
+            entity.setName(name);
+        }
+        if (apiKeyValue != null && !apiKeyValue.isBlank()) {
+            entity.setApiKeyValue(apiKeyValue);
+        }
+        if (active != null) {
+            entity.setActive(active);
+        }
+        ProviderKeyEntity saved = providerKeyRepository.save(entity);
+        String organizationId = saved.getOrganization() == null ? "" : saved.getOrganization().getId();
+        auditLogService.record(context, organizationId, "provider_key.update", "provider_key", saved.getId(), null, null, Map.of(
+                "name", saved.getName(),
+                "provider_id", saved.getProviderId(),
+                "active", saved.isActive()
+        ));
+        return saved;
+    }
+
+    public void deleteProviderKey(RequestContext context, String id) {
+        ProviderKeyEntity entity = providerKeyRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Unknown provider key: " + id));
+        String organizationId = entity.getOrganization() == null ? "" : entity.getOrganization().getId();
+        auditLogService.record(context, organizationId, "provider_key.delete", "provider_key", entity.getId(), null, null, Map.of(
+                "name", entity.getName(),
+                "provider_id", entity.getProviderId(),
+                "active", entity.isActive()
+        ));
+        providerKeyRepository.delete(entity);
     }
 
     public record ApiKeyCreateResult(ApiKeyEntity entity, String rawToken) {

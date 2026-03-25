@@ -16,6 +16,7 @@ import com.qizlan.llm.gateway.persistence.entity.GuardrailRuleEntity;
 import com.qizlan.llm.gateway.persistence.entity.GuardrailViolationEntity;
 import com.qizlan.llm.gateway.persistence.entity.OrganizationEntity;
 import com.qizlan.llm.gateway.persistence.entity.ProjectEntity;
+import com.qizlan.llm.gateway.persistence.entity.ProviderKeyEntity;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.constraints.NotBlank;
@@ -196,6 +197,45 @@ public class ControlPlaneController {
         return ResponseEntity.noContent().build();
     }
 
+    // Provider Key endpoints
+
+    @GetMapping("/keys/provider")
+    @Operation(summary = "List provider keys", description = "Return all provider keys for upstream LLM services.")
+    public List<Map<String, Object>> listProviderKeys() {
+        return controlPlaneService.listProviderKeys().stream().map(this::toProviderKey).toList();
+    }
+
+    @PostMapping("/keys/provider")
+    @Operation(summary = "Create provider key", description = "Create a new provider key for an upstream LLM service.")
+    public Map<String, Object> createProviderKey(@RequestBody ProviderKeyCreateRequest request, HttpServletRequest httpRequest) {
+        return toProviderKey(controlPlaneService.createProviderKey(
+                requestContextService.get(httpRequest),
+                request.name(),
+                request.provider_id(),
+                request.api_key_value(),
+                request.organization_id()
+        ));
+    }
+
+    @PatchMapping("/keys/provider/{id}")
+    @Operation(summary = "Update provider key", description = "Update an existing provider key.")
+    public Map<String, Object> updateProviderKey(@PathVariable("id") String id, @RequestBody ProviderKeyPatchRequest request, HttpServletRequest httpRequest) {
+        return toProviderKey(controlPlaneService.updateProviderKey(
+                requestContextService.get(httpRequest),
+                id,
+                request.name(),
+                request.api_key_value(),
+                request.active()
+        ));
+    }
+
+    @DeleteMapping("/keys/provider/{id}")
+    @Operation(summary = "Delete provider key", description = "Delete a provider key.")
+    public ResponseEntity<Void> deleteProviderKey(@PathVariable("id") String id, HttpServletRequest httpRequest) {
+        controlPlaneService.deleteProviderKey(requestContextService.get(httpRequest), id);
+        return ResponseEntity.noContent().build();
+    }
+
     @GetMapping("/logs")
     @Operation(summary = "List request logs", description = "Return recent gateway request logs sorted by creation time.")
     public Map<String, Object> listLogs() {
@@ -345,6 +385,17 @@ public class ControlPlaneController {
         );
     }
 
+    private Map<String, Object> toProviderKey(ProviderKeyEntity entity) {
+        return Map.of(
+                "id", entity.getId(),
+                "name", entity.getName(),
+                "provider_id", entity.getProviderId(),
+                "active", entity.isActive(),
+                "organization_id", entity.getOrganization() == null ? "" : entity.getOrganization().getId(),
+                "created_at", entity.getCreatedAt().toString()
+        );
+    }
+
     private Map<String, Object> toAuditLog(AuditLogEntity entity) {
         return Map.ofEntries(
                 Map.entry("id", entity.getId()),
@@ -428,5 +479,11 @@ public class ControlPlaneController {
     }
 
     public record GuardrailTestRequest(@NotBlank String text) {
+    }
+
+    public record ProviderKeyCreateRequest(@NotBlank String name, @NotBlank String provider_id, @NotBlank String api_key_value, @NotBlank String organization_id) {
+    }
+
+    public record ProviderKeyPatchRequest(String name, String api_key_value, Boolean active) {
     }
 }
