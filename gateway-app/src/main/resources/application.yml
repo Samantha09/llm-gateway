@@ -54,6 +54,10 @@ llm:
         enabled: ${KIMI_ENABLED:false}
         base-url: ${KIMI_BASE_URL:https://api.moonshot.cn}
         api-key: ${KIMI_API_KEY:dev-kimi-key}
+      kimi-codeplan:
+        enabled: ${KIMI_CODEPLAN_ENABLED:false}
+        base-url: ${KIMI_CODEPLAN_BASE_URL:https://api.kimi.com/coding}
+        api-key: ${KIMI_CODEPLAN_API_KEY:dev-kimi-codeplan-key}
     routing:
       failure-threshold: 1
       cooldown-millis: 30000

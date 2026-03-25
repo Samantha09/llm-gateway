@@ -26,7 +26,8 @@ public record GatewayProperties(
             Endpoint openai,
             Endpoint anthropic,
             Endpoint google,
-            Endpoint kimi
+            Endpoint kimi,
+            Endpoint kimiCodeplan
     ) {
     }
 

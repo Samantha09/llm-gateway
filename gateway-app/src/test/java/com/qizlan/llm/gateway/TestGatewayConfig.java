@@ -18,7 +18,7 @@ public class TestGatewayConfig {
         return new GatewayProperties(
                 "Authorization",
                 new GatewayProperties.SeedProperties(true, "test-api-key", "Test seed key"),
-                new GatewayProperties.ProviderProperties("single", endpoint, endpoint, endpoint),
+                new GatewayProperties.ProviderProperties("single", endpoint, endpoint, endpoint, endpoint, endpoint),
                 new GatewayProperties.RoutingProperties(3, 1000L, 0L),
                 new GatewayProperties.SyncProperties(false, 0L, ""),
                 new GatewayProperties.AggregationProperties(false, 0L, 0L, 0L),

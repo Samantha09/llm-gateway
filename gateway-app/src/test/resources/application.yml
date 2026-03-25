@@ -33,6 +33,10 @@ llm:
         enabled: false
         base-url: http://localhost:18083
         api-key: test-kimi-key
+      kimi-codeplan:
+        enabled: false
+        base-url: http://localhost:18084
+        api-key: test-kimi-codeplan-key
     routing:
       failure-threshold: 1
       cooldown-millis: 30000

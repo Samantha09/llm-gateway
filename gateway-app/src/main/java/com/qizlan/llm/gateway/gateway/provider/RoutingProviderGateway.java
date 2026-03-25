@@ -117,6 +117,7 @@ public class RoutingProviderGateway implements ProviderGateway {
             case "anthropic" -> properties.providers().anthropic().enabled();
             case "google" -> properties.providers().google().enabled();
             case "kimi" -> properties.providers().kimi().enabled();
+            case "kimi-codeplan" -> properties.providers().kimiCodeplan().enabled();
             default -> false;
         };
     }
