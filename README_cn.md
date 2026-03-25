@@ -149,6 +149,13 @@ OpenAPI JSON：
 - gateway: `http://localhost:8080/json`
 - control-plane: `http://localhost:8081/json`
 
+## 文档
+
+详细使用指南请参阅 [docs](./docs) 目录：
+
+- [多用户 API Key 分发指南](./docs/multi-user-api-key-guide.md) - 为多用户分發不同的 API Key，实现用量追踪和成本分摊
+- [Claude Code 集成指南](./docs/claude-code-integration.md) - 配置 Claude Code CLI 使用 LLM Gateway
+
 ## 当前状态
 
 项目仍在持续迭代，但已经可以支持：

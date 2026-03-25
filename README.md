@@ -149,6 +149,13 @@ OpenAPI JSON:
 - gateway: `http://localhost:8080/json`
 - control-plane: `http://localhost:8081/json`
 
+## Documentation
+
+See the [docs](./docs) directory for detailed guides:
+
+- [Multi-user API Key Distribution Guide](./docs/multi-user-api-key-guide.md) - Distribute different API keys to users for usage tracking and cost allocation
+- [Claude Code Integration Guide](./docs/claude-code-integration.md) - Configure Claude Code CLI to use LLM Gateway
+
 ## Status
 
 The repository is under active development, but it is already structured to support:
