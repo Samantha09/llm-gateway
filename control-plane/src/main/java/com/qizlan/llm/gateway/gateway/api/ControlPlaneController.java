@@ -7,6 +7,7 @@ import com.qizlan.llm.gateway.gateway.service.ControlPlaneService;
 import com.qizlan.llm.gateway.gateway.service.CostAggregationService;
 import com.qizlan.llm.gateway.gateway.service.CostAggregationWorkerService;
 import com.qizlan.llm.gateway.gateway.service.GuardrailService;
+import com.qizlan.llm.gateway.gateway.service.ModelCatalogService;
 import com.qizlan.llm.gateway.gateway.service.RequestLogQueryService;
 import com.qizlan.llm.gateway.gateway.service.RequestContextService;
 import com.qizlan.llm.gateway.persistence.entity.ApiKeyEntity;
@@ -46,6 +47,7 @@ public class ControlPlaneController {
     private final CostAggregationWorkerService costAggregationWorkerService;
     private final AuditLogService auditLogService;
     private final GuardrailService guardrailService;
+    private final ModelCatalogService modelCatalogService;
     private final ObjectMapper objectMapper;
     private final RequestContextService requestContextService;
 
@@ -56,6 +58,7 @@ public class ControlPlaneController {
             CostAggregationWorkerService costAggregationWorkerService,
             AuditLogService auditLogService,
             GuardrailService guardrailService,
+            ModelCatalogService modelCatalogService,
             ObjectMapper objectMapper,
             RequestContextService requestContextService
     ) {
@@ -65,8 +68,15 @@ public class ControlPlaneController {
         this.costAggregationWorkerService = costAggregationWorkerService;
         this.auditLogService = auditLogService;
         this.guardrailService = guardrailService;
+        this.modelCatalogService = modelCatalogService;
         this.objectMapper = objectMapper;
         this.requestContextService = requestContextService;
+    }
+
+    @GetMapping("/v1/models")
+    @Operation(summary = "List models", description = "Returns the gateway-fused catalog of models, including metadata such as provider, context window, and pricing.")
+    public Map<String, Object> listModels() {
+        return Map.of("data", modelCatalogService.listModels());
     }
 
     @GetMapping("/orgs")
