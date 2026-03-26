@@ -15,6 +15,7 @@ import com.qizlan.llm.gateway.persistence.entity.ApiKeyIamRuleEntity;
 import com.qizlan.llm.gateway.persistence.entity.AuditLogEntity;
 import com.qizlan.llm.gateway.persistence.entity.GuardrailRuleEntity;
 import com.qizlan.llm.gateway.persistence.entity.GuardrailViolationEntity;
+import com.qizlan.llm.gateway.persistence.entity.ModelEntity;
 import com.qizlan.llm.gateway.persistence.entity.OrganizationEntity;
 import com.qizlan.llm.gateway.persistence.entity.ProjectEntity;
 import com.qizlan.llm.gateway.persistence.entity.ProviderKeyEntity;
@@ -77,6 +78,53 @@ public class ControlPlaneController {
     @Operation(summary = "List models", description = "Returns the gateway-fused catalog of models, including metadata such as provider, context window, and pricing.")
     public Map<String, Object> listModels() {
         return Map.of("data", modelCatalogService.listModels());
+    }
+
+    @PostMapping("/v1/models")
+    @Operation(summary = "Create model", description = "Create a custom model definition.")
+    public Map<String, Object> createModel(@RequestBody ModelCreateRequest request, HttpServletRequest httpRequest) {
+        ModelEntity entity = modelCatalogService.createModel(
+                request.id(),
+                request.name(),
+                request.family(),
+                request.free_model() != null ? request.free_model() : false,
+                request.supports_vision() != null ? request.supports_vision() : false,
+                request.supports_tools() != null ? request.supports_tools() : false,
+                request.supports_reasoning() != null ? request.supports_reasoning() : false,
+                request.supports_streaming() != null ? request.supports_streaming() : true,
+                request.image_generation() != null ? request.image_generation() : false,
+                request.context_window_tokens() != null ? request.context_window_tokens() : 0,
+                request.input_cost_micros_per_token() != null ? request.input_cost_micros_per_token() : 0L,
+                request.output_cost_micros_per_token() != null ? request.output_cost_micros_per_token() : 0L
+        );
+        return toModel(entity);
+    }
+
+    @PatchMapping("/v1/models/{id}")
+    @Operation(summary = "Update model", description = "Update a custom model definition. Built-in models cannot be modified.")
+    public Map<String, Object> updateModel(@PathVariable("id") String id, @RequestBody ModelPatchRequest request, HttpServletRequest httpRequest) {
+        ModelEntity entity = modelCatalogService.updateModel(
+                id,
+                request.name(),
+                request.family(),
+                request.free_model(),
+                request.supports_vision(),
+                request.supports_tools(),
+                request.supports_reasoning(),
+                request.supports_streaming(),
+                request.image_generation(),
+                request.context_window_tokens(),
+                request.input_cost_micros_per_token(),
+                request.output_cost_micros_per_token()
+        );
+        return toModel(entity);
+    }
+
+    @DeleteMapping("/v1/models/{id}")
+    @Operation(summary = "Delete model", description = "Soft-delete a custom model. Built-in models cannot be deleted.")
+    public ResponseEntity<Void> deleteModel(@PathVariable("id") String id, HttpServletRequest httpRequest) {
+        modelCatalogService.deleteModel(id);
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/orgs")
@@ -406,6 +454,25 @@ public class ControlPlaneController {
         );
     }
 
+    private Map<String, Object> toModel(ModelEntity entity) {
+        return Map.ofEntries(
+                Map.entry("id", entity.getId()),
+                Map.entry("name", entity.getName()),
+                Map.entry("family", entity.getFamily()),
+                Map.entry("free_model", entity.isFreeModel()),
+                Map.entry("supports_vision", entity.isSupportsVision()),
+                Map.entry("supports_tools", entity.isSupportsTools()),
+                Map.entry("supports_reasoning", entity.isSupportsReasoning()),
+                Map.entry("supports_streaming", entity.isSupportsStreaming()),
+                Map.entry("image_generation", entity.isImageGeneration()),
+                Map.entry("context_window_tokens", entity.getContextWindowTokens()),
+                Map.entry("input_cost_micros_per_token", entity.getInputCostMicrosPerToken()),
+                Map.entry("output_cost_micros_per_token", entity.getOutputCostMicrosPerToken()),
+                Map.entry("builtin", entity.isBuiltin()),
+                Map.entry("archived", entity.isArchived())
+        );
+    }
+
     private Map<String, Object> toAuditLog(AuditLogEntity entity) {
         return Map.ofEntries(
                 Map.entry("id", entity.getId()),
@@ -495,5 +562,18 @@ public class ControlPlaneController {
     }
 
     public record ProviderKeyPatchRequest(String name, String api_key_value, Boolean active) {
+    }
+
+    public record ModelCreateRequest(@NotBlank String id, @NotBlank String name, @NotBlank String family,
+                                     Boolean free_model, Boolean supports_vision, Boolean supports_tools,
+                                     Boolean supports_reasoning, Boolean supports_streaming, Boolean image_generation,
+                                     Integer context_window_tokens, Long input_cost_micros_per_token,
+                                     Long output_cost_micros_per_token) {
+    }
+
+    public record ModelPatchRequest(String name, String family, Boolean free_model, Boolean supports_vision,
+                                    Boolean supports_tools, Boolean supports_reasoning, Boolean supports_streaming,
+                                    Boolean image_generation, Integer context_window_tokens,
+                                    Long input_cost_micros_per_token, Long output_cost_micros_per_token) {
     }
 }

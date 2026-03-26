@@ -80,10 +80,11 @@ public class GatewayRoutingConfiguration {
 
     @Bean
     public ModelCatalogService modelCatalogService(
+            ModelRepository modelRepository,
             ModelProviderMappingRepository mappingRepository,
             RoutingProjectionInvalidationService routingProjectionInvalidationService
     ) {
-        return new ModelCatalogService(mappingRepository, routingProjectionInvalidationService);
+        return new ModelCatalogService(modelRepository, mappingRepository, routingProjectionInvalidationService);
     }
 
     @Bean

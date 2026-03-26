@@ -178,12 +178,15 @@
     "contextWindow": "Context Window",
     "inputCost": "Input Cost",
     "outputCost": "Output Cost",
+    "builtin": "Built-in",
+    "builtinNotEditable": "Built-in models cannot be edited",
     "fields": {
       "id": "ID",
       "name": "Name",
       "family": "Family",
       "contextWindow": "Context Window",
-      "free": "Free"
+      "free": "Free",
+      "builtin": "Built-in"
     }
   },
   "logs": {

@@ -178,12 +178,15 @@
     "contextWindow": "上下文窗口",
     "inputCost": "输入成本",
     "outputCost": "输出成本",
+    "builtin": "内置",
+    "builtinNotEditable": "内置模型不可编辑",
     "fields": {
       "id": "ID",
       "name": "名称",
       "family": "模型族",
       "contextWindow": "上下文窗口",
-      "free": "免费"
+      "free": "免费",
+      "builtin": "内置"
     }
   },
   "logs": {

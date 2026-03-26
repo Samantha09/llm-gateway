@@ -48,6 +48,9 @@ public class ModelEntity {
     @Column(nullable = false)
     private boolean archived;
 
+    @Column(nullable = false)
+    private boolean builtin;
+
     protected ModelEntity() {
     }
 
@@ -61,11 +64,29 @@ public class ModelEntity {
             boolean supportsStreaming,
             boolean supportsVision
     ) {
-        return new ModelEntity(id, name, family, freeModel, supportsVision, supportsTools, supportsReasoning, supportsStreaming, false);
+        return new ModelEntity(id, name, family, freeModel, supportsVision, supportsTools, supportsReasoning, supportsStreaming, false, true);
+    }
+
+    public static ModelEntity textModel(
+            String id,
+            String name,
+            String family,
+            boolean freeModel,
+            boolean supportsTools,
+            boolean supportsReasoning,
+            boolean supportsStreaming,
+            boolean supportsVision,
+            boolean builtin
+    ) {
+        return new ModelEntity(id, name, family, freeModel, supportsVision, supportsTools, supportsReasoning, supportsStreaming, false, builtin);
     }
 
     public static ModelEntity imageModel(String id, String name, String family) {
-        return new ModelEntity(id, name, family, false, false, false, true, false, true);
+        return new ModelEntity(id, name, family, false, false, false, true, false, true, true);
+    }
+
+    public static ModelEntity imageModel(String id, String name, String family, boolean builtin) {
+        return new ModelEntity(id, name, family, false, false, false, true, false, true, builtin);
     }
 
     public ModelEntity(
@@ -77,7 +98,8 @@ public class ModelEntity {
             boolean supportsTools,
             boolean supportsReasoning,
             boolean supportsStreaming,
-            boolean imageGeneration
+            boolean imageGeneration,
+            boolean builtin
     ) {
         this.id = id;
         this.name = name;
@@ -92,6 +114,7 @@ public class ModelEntity {
         this.inputCostMicrosPerToken = 0L;
         this.outputCostMicrosPerToken = 0L;
         this.archived = false;
+        this.builtin = builtin;
     }
 
     public String getId() {
@@ -144,6 +167,10 @@ public class ModelEntity {
 
     public boolean isArchived() {
         return archived;
+    }
+
+    public boolean isBuiltin() {
+        return builtin;
     }
 
     public void refreshMetadata(

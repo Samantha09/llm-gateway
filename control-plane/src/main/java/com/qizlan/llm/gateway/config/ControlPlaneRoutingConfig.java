@@ -5,6 +5,7 @@ import com.qizlan.llm.gateway.gateway.service.RoutingProjectionInvalidationServi
 import com.qizlan.llm.gateway.gateway.service.RoutingProjectionStateService;
 import com.qizlan.llm.gateway.gateway.service.ModelRoutingCache;
 import com.qizlan.llm.gateway.persistence.repository.ModelProviderMappingRepository;
+import com.qizlan.llm.gateway.persistence.repository.ModelRepository;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -54,8 +55,9 @@ public class ControlPlaneRoutingConfig {
 
     @Bean
     public ModelCatalogService modelCatalogService(
+            ModelRepository modelRepository,
             ModelProviderMappingRepository mappingRepository,
             RoutingProjectionInvalidationService routingProjectionInvalidationService) {
-        return new ModelCatalogService(mappingRepository, routingProjectionInvalidationService);
+        return new ModelCatalogService(modelRepository, mappingRepository, routingProjectionInvalidationService);
     }
 }

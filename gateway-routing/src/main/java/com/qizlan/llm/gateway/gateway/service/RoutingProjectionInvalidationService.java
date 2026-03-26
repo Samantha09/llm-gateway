@@ -39,4 +39,9 @@ public class RoutingProjectionInvalidationService {
             lastCheckedAtMillis = now;
         }
     }
+
+    public void invalidate() {
+        modelRoutingCache.clear();
+        lastSeenVersion = routingProjectionStateService.currentVersion().version();
+    }
 }

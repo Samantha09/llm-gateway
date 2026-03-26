@@ -55,17 +55,17 @@ public class ControlPlaneSeedDataConfig {
 
             // Create models
             ModelEntity gpt4o = modelRepository.findById("gpt-4o")
-                    .orElseGet(() -> modelRepository.save(ModelEntity.textModel("gpt-4o", "GPT-4o", "openai", false, true, true, true, true)));
+                    .orElseGet(() -> modelRepository.save(ModelEntity.textModel("gpt-4o", "GPT-4o", "openai", false, true, true, true, true, true)));
             ModelEntity claude = modelRepository.findById("claude-3-5-sonnet")
-                    .orElseGet(() -> modelRepository.save(ModelEntity.textModel("claude-3-5-sonnet", "Claude 3.5 Sonnet", "anthropic", false, true, true, true, false)));
+                    .orElseGet(() -> modelRepository.save(ModelEntity.textModel("claude-3-5-sonnet", "Claude 3.5 Sonnet", "anthropic", false, true, true, true, false, true)));
             ModelEntity geminiText = modelRepository.findById("gemini-2.0-flash")
-                    .orElseGet(() -> modelRepository.save(ModelEntity.textModel("gemini-2.0-flash", "Gemini 2.0 Flash", "google", false, false, false, true, false)));
+                    .orElseGet(() -> modelRepository.save(ModelEntity.textModel("gemini-2.0-flash", "Gemini 2.0 Flash", "google", false, false, false, true, false, true)));
             ModelEntity geminiImage = modelRepository.findById("gemini-2.5-flash-image")
-                    .orElseGet(() -> modelRepository.save(ModelEntity.imageModel("gemini-2.5-flash-image", "Gemini 2.5 Flash Image", "google")));
+                    .orElseGet(() -> modelRepository.save(ModelEntity.imageModel("gemini-2.5-flash-image", "Gemini 2.5 Flash Image", "google", true)));
             ModelEntity kimiModel = modelRepository.findById("kimi-k2")
-                    .orElseGet(() -> modelRepository.save(ModelEntity.textModel("kimi-k2", "Kimi K2", "kimi", false, true, true, true, false)));
+                    .orElseGet(() -> modelRepository.save(ModelEntity.textModel("kimi-k2", "Kimi K2", "kimi", false, true, true, true, false, true)));
             ModelEntity kimiCodeplanModel = modelRepository.findById("kimi-code")
-                    .orElseGet(() -> modelRepository.save(ModelEntity.textModel("kimi-code", "Kimi Code", "kimi-codeplan", false, true, true, true, false)));
+                    .orElseGet(() -> modelRepository.save(ModelEntity.textModel("kimi-code", "Kimi Code", "kimi-codeplan", false, true, true, true, false, true)));
 
             // Create mappings
             if (!mappingRepository.existsByModelIdAndProviderId("gpt-4o", "openai")) {
@@ -89,7 +89,7 @@ public class ControlPlaneSeedDataConfig {
 
             // Gateway-text model mapped to all providers
             ModelEntity gatewayText = modelRepository.findById("gateway-text")
-                    .orElseGet(() -> modelRepository.save(ModelEntity.textModel("gateway-text", "Gateway Text", "gateway", false, true, true, true, false)));
+                    .orElseGet(() -> modelRepository.save(ModelEntity.textModel("gateway-text", "Gateway Text", "gateway", false, true, true, true, false, true)));
             if (!mappingRepository.existsByModelIdAndProviderId("gateway-text", "openai")) {
                 mappingRepository.save(ModelProviderMappingEntity.of(gatewayText, openai, "gpt-4o", true, false, true, true, false, 10));
             }

@@ -10,6 +10,7 @@ public record ModelDto(
         int context_window_tokens,
         long input_cost_micros_per_token,
         long output_cost_micros_per_token,
+        boolean builtin,
         Architecture architecture,
         List<ProviderSupport> providers
 ) {

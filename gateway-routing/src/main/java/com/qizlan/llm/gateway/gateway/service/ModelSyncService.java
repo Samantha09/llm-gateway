@@ -97,7 +97,8 @@ public class ModelSyncService {
                             descriptor.supportsTools(),
                             descriptor.supportsReasoning(),
                             descriptor.supportsStreaming(),
-                            descriptor.imageGeneration()
+                            descriptor.imageGeneration(),
+                            false
                     )));
             Map<String, Object> beforeModel = modelSnapshot(model);
             model.refreshMetadata(
