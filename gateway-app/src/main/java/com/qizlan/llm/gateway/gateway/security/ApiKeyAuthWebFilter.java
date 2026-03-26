@@ -60,22 +60,27 @@ public class ApiKeyAuthWebFilter implements WebFilter {
                     return chain.filter(exchange);
                 })
                 .onErrorResume(ApiKeyFailure.class, failure -> {
-                    log.debug("API key auth failed for {}: {}", exchange.getRequest().getPath().value(), failure.getMessage());
+                    log.warn("API key auth failed for {}: {}", exchange.getRequest().getPath().value(), failure.getMessage());
                     return writeError(exchange, failure.status(), failure.getMessage());
                 });
     }
 
     private ApiKeyEntity authenticate(ServerWebExchange exchange) {
         String headerValue = exchange.getRequest().getHeaders().getFirst(properties.apiKeyHeader());
+        log.warn("Received API key header: {}", headerValue != null ? "Bearer lgw_***" : "null");
         if (headerValue == null || !headerValue.startsWith("Bearer ")) {
             throw new ApiKeyFailure(HttpStatus.UNAUTHORIZED, "Missing Bearer token");
         }
 
         String token = headerValue.substring("Bearer ".length()).trim();
-        ApiKeyEntity apiKey = apiKeyLookupCache.findActiveByTokenHash(tokenService.hash(token)).orElse(null);
+        String tokenHash = tokenService.hash(token);
+        log.warn("Looking up token hash: {}", tokenHash.substring(0, 16) + "...");
+        ApiKeyEntity apiKey = apiKeyLookupCache.findActiveByTokenHash(tokenHash).orElse(null);
         if (apiKey == null) {
+            log.warn("API key not found in cache/database");
             throw new ApiKeyFailure(HttpStatus.UNAUTHORIZED, "Invalid API key");
         }
+        log.warn("API key found: id={}, name={}, active={}", apiKey.getId(), apiKey.getName(), apiKey.isActive());
         try {
             iamRuleService.assertBudgetAllowed(apiKey);
             iamRuleService.assertPathAllowed(apiKey, exchange.getRequest().getPath().value());

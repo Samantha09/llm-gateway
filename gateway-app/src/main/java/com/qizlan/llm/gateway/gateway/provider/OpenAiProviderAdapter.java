@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.qizlan.llm.gateway.config.GatewayProperties;
 import com.qizlan.llm.gateway.gateway.dto.ChatCompletionRequest;
 import com.qizlan.llm.gateway.gateway.dto.ImageDtos;
+import com.qizlan.llm.gateway.gateway.service.ProviderKeyService;
 import io.micrometer.tracing.Tracer;
 import java.util.HashMap;
 import java.util.List;
@@ -18,11 +19,17 @@ import reactor.core.publisher.Mono;
 @Component
 public class OpenAiProviderAdapter extends AbstractHttpProviderAdapter {
 
-    private final GatewayProperties.Endpoint endpoint;
+    private final ProviderKeyService providerKeyService;
 
-    public OpenAiProviderAdapter(GatewayProperties properties, ObjectMapper objectMapper, Tracer tracer) {
+    public OpenAiProviderAdapter(GatewayProperties properties, ObjectMapper objectMapper, Tracer tracer,
+                                 ProviderKeyService providerKeyService) {
         super(properties.providers().openai().baseUrl(), objectMapper, tracer);
-        this.endpoint = properties.providers().openai();
+        this.providerKeyService = providerKeyService;
+    }
+
+    private String getApiKey() {
+        return providerKeyService.getApiKey("openai")
+                .orElseThrow(() -> new IllegalStateException("No API key configured for provider: openai"));
     }
 
     @Override
@@ -43,7 +50,7 @@ public class OpenAiProviderAdapter extends AbstractHttpProviderAdapter {
             if (request.max_tokens() != null) {
                 body.put("max_tokens", request.max_tokens());
             }
-            JsonNode root = postJson("/v1/chat/completions", Map.of("Authorization", "Bearer " + endpoint.apiKey()), body);
+            JsonNode root = postJson("/v1/chat/completions", Map.of("Authorization", "Bearer " + getApiKey()), body);
             String content = readText(root, "/choices/0/message/content");
             return new ProviderChatResult(
                     providerId(),
@@ -71,7 +78,7 @@ public class OpenAiProviderAdapter extends AbstractHttpProviderAdapter {
         if (request.max_tokens() != null) {
             body.put("max_tokens", request.max_tokens());
         }
-        return postJsonAsync("/v1/chat/completions", Map.of("Authorization", "Bearer " + endpoint.apiKey()), body)
+        return postJsonAsync("/v1/chat/completions", Map.of("Authorization", "Bearer " + getApiKey()), body)
                 .map(root -> new ProviderChatResult(
                         providerId(),
                         providerModel,
@@ -86,7 +93,7 @@ public class OpenAiProviderAdapter extends AbstractHttpProviderAdapter {
     @Override
     public ImageDtos.ImageResponse generateImage(ImageDtos.ImageGenerationRequest request, String providerModel) {
         try {
-            JsonNode root = postJson("/v1/images/generations", Map.of("Authorization", "Bearer " + endpoint.apiKey()), Map.of(
+            JsonNode root = postJson("/v1/images/generations", Map.of("Authorization", "Bearer " + getApiKey()), Map.of(
                     "model", providerModel,
                     "prompt", request.prompt(),
                     "n", request.n() == null ? 1 : request.n()
@@ -99,7 +106,7 @@ public class OpenAiProviderAdapter extends AbstractHttpProviderAdapter {
 
     @Override
     public Mono<ImageDtos.ImageResponse> generateImageAsync(ImageDtos.ImageGenerationRequest request, String providerModel) {
-        return postJsonAsync("/v1/images/generations", Map.of("Authorization", "Bearer " + endpoint.apiKey()), Map.of(
+        return postJsonAsync("/v1/images/generations", Map.of("Authorization", "Bearer " + getApiKey()), Map.of(
                 "model", providerModel,
                 "prompt", request.prompt(),
                 "n", request.n() == null ? 1 : request.n()
@@ -109,7 +116,7 @@ public class OpenAiProviderAdapter extends AbstractHttpProviderAdapter {
     @Override
     public ImageDtos.ImageResponse editImage(ImageDtos.ImageEditRequest request, String providerModel) {
         try {
-            JsonNode root = postJson("/v1/images/edits", Map.of("Authorization", "Bearer " + endpoint.apiKey()), Map.of(
+            JsonNode root = postJson("/v1/images/edits", Map.of("Authorization", "Bearer " + getApiKey()), Map.of(
                     "model", providerModel,
                     "prompt", request.prompt(),
                     "n", request.n() == null ? 1 : request.n()
@@ -122,7 +129,7 @@ public class OpenAiProviderAdapter extends AbstractHttpProviderAdapter {
 
     @Override
     public Mono<ImageDtos.ImageResponse> editImageAsync(ImageDtos.ImageEditRequest request, String providerModel) {
-        return postJsonAsync("/v1/images/edits", Map.of("Authorization", "Bearer " + endpoint.apiKey()), Map.of(
+        return postJsonAsync("/v1/images/edits", Map.of("Authorization", "Bearer " + getApiKey()), Map.of(
                 "model", providerModel,
                 "prompt", request.prompt(),
                 "n", request.n() == null ? 1 : request.n()
@@ -142,7 +149,7 @@ public class OpenAiProviderAdapter extends AbstractHttpProviderAdapter {
     @Override
     public List<ProviderModelDescriptor> listModels() {
         try {
-            JsonNode root = getJson("/v1/models", Map.of("Authorization", "Bearer " + endpoint.apiKey()));
+            JsonNode root = getJson("/v1/models", Map.of("Authorization", "Bearer " + getApiKey()));
             JsonNode data = root.path("data");
             if (!data.isArray()) {
                 return List.of();
@@ -186,7 +193,7 @@ public class OpenAiProviderAdapter extends AbstractHttpProviderAdapter {
         if (request.max_tokens() != null) {
             body.put("max_tokens", request.max_tokens());
         }
-        streamOpenAiSse("/v1/chat/completions", Map.of("Authorization", "Bearer " + endpoint.apiKey()), body, consumer, providerId());
+        streamOpenAiSse("/v1/chat/completions", Map.of("Authorization", "Bearer " + getApiKey()), body, consumer, providerId());
     }
 
     @Override
@@ -201,7 +208,7 @@ public class OpenAiProviderAdapter extends AbstractHttpProviderAdapter {
         if (request.max_tokens() != null) {
             body.put("max_tokens", request.max_tokens());
         }
-        return streamOpenAiSseAsync("/v1/chat/completions", Map.of("Authorization", "Bearer " + endpoint.apiKey()), body, providerId());
+        return streamOpenAiSseAsync("/v1/chat/completions", Map.of("Authorization", "Bearer " + getApiKey()), body, providerId());
     }
 
     private int inferContextWindow(String id) {

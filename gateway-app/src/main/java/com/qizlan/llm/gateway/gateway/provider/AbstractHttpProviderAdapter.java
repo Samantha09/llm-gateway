@@ -25,7 +25,7 @@ abstract class AbstractHttpProviderAdapter implements ProviderAdapter {
 
     protected AbstractHttpProviderAdapter(String baseUrl, ObjectMapper objectMapper, Tracer tracer) {
         this.objectMapper = objectMapper;
-        this.baseUrl = trimTrailingSlash(baseUrl);
+        this.baseUrl = baseUrl == null ? "" : baseUrl.strip();
         this.tracer = tracer;
         this.webClient = WebClient.builder()
                 .baseUrl(this.baseUrl)
@@ -61,7 +61,8 @@ abstract class AbstractHttpProviderAdapter implements ProviderAdapter {
     }
 
     protected UpstreamProviderException mapException(String providerId, WebClientResponseException ex) {
-        String message = providerId + " upstream error: " + ex.getStatusCode().value();
+        String body = ex.getResponseBodyAsString();
+        String message = providerId + " upstream error: " + ex.getStatusCode().value() + " - " + (body.isBlank() ? ex.getStatusText() : body);
         return UpstreamProviderException.fromStatus(providerId, ex.getStatusCode().value(), message);
     }
 

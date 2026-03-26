@@ -5,9 +5,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.qizlan.llm.gateway.config.GatewayProperties;
 import com.qizlan.llm.gateway.gateway.dto.ChatCompletionRequest;
 import com.qizlan.llm.gateway.gateway.dto.ImageDtos;
+import com.qizlan.llm.gateway.gateway.service.ProviderKeyService;
 import io.micrometer.tracing.Tracer;
-import java.util.HashMap;
 import java.util.List;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Consumer;
 import org.springframework.stereotype.Component;
@@ -18,11 +19,17 @@ import reactor.core.publisher.Mono;
 @Component
 public class KimiCodeplanProviderAdapter extends AbstractHttpProviderAdapter {
 
-    private final GatewayProperties.Endpoint endpoint;
+    private final ProviderKeyService providerKeyService;
 
-    public KimiCodeplanProviderAdapter(GatewayProperties properties, ObjectMapper objectMapper, Tracer tracer) {
+    public KimiCodeplanProviderAdapter(GatewayProperties properties, ObjectMapper objectMapper, Tracer tracer,
+                                       ProviderKeyService providerKeyService) {
         super(properties.providers().kimiCodeplan().baseUrl(), objectMapper, tracer);
-        this.endpoint = properties.providers().kimiCodeplan();
+        this.providerKeyService = providerKeyService;
+    }
+
+    private String getApiKey() {
+        return providerKeyService.getApiKey("kimi-codeplan")
+                .orElseThrow(() -> new IllegalStateException("No API key configured for provider: kimi-codeplan"));
     }
 
     @Override
@@ -36,23 +43,26 @@ public class KimiCodeplanProviderAdapter extends AbstractHttpProviderAdapter {
             Map<String, Object> body = new HashMap<>();
             body.put("model", providerModel);
             body.put("messages", toMessagePayload(request.messages()));
+            body.put("max_tokens", request.max_tokens() == null ? 4096 : request.max_tokens());
             body.put("stream", false);
             if (request.temperature() != null) {
                 body.put("temperature", request.temperature());
             }
-            if (request.max_tokens() != null) {
-                body.put("max_tokens", request.max_tokens());
-            }
-            JsonNode root = postJson("/v1/chat/completions", Map.of("Authorization", "Bearer " + endpoint.apiKey()), body);
-            String content = readText(root, "/choices/0/message/content");
+            // Kimi CodePlan uses Anthropic API format with specific User-Agent
+            // Use relative path v1/messages - baseUrl should be https://api.kimi.com/coding
+            System.out.println("[DEBUG] KimiCodePlan baseUrl: " + baseUrl + ", requesting: v1/messages");
+            JsonNode root = postJson("v1/messages", Map.of(
+                    "x-api-key", getApiKey(),
+                    "anthropic-version", "2023-06-01",
+                    "User-Agent", "Anthropic/JS 0.73.0"), body);
             return new ProviderChatResult(
                     providerId(),
                     providerModel,
-                    content,
+                    readText(root, "/content/0/text"),
                     false,
-                    readInt(root, "/usage/prompt_tokens"),
-                    readInt(root, "/usage/completion_tokens"),
-                    readInt(root, "/usage/total_tokens")
+                    readInt(root, "/usage/input_tokens"),
+                    readInt(root, "/usage/output_tokens"),
+                    sum(readInt(root, "/usage/input_tokens"), readInt(root, "/usage/output_tokens"))
             );
         } catch (WebClientResponseException ex) {
             throw mapException(providerId(), ex);
@@ -64,22 +74,23 @@ public class KimiCodeplanProviderAdapter extends AbstractHttpProviderAdapter {
         Map<String, Object> body = new HashMap<>();
         body.put("model", providerModel);
         body.put("messages", toMessagePayload(request.messages()));
+        body.put("max_tokens", request.max_tokens() == null ? 4096 : request.max_tokens());
         body.put("stream", false);
         if (request.temperature() != null) {
             body.put("temperature", request.temperature());
         }
-        if (request.max_tokens() != null) {
-            body.put("max_tokens", request.max_tokens());
-        }
-        return postJsonAsync("/v1/chat/completions", Map.of("Authorization", "Bearer " + endpoint.apiKey()), body)
+        return postJsonAsync("v1/messages", Map.of(
+                        "x-api-key", getApiKey(),
+                        "anthropic-version", "2023-06-01",
+                        "User-Agent", "Anthropic/JS 0.73.0"), body)
                 .map(root -> new ProviderChatResult(
                         providerId(),
                         providerModel,
-                        readText(root, "/choices/0/message/content"),
+                        readText(root, "/content/0/text"),
                         false,
-                        readInt(root, "/usage/prompt_tokens"),
-                        readInt(root, "/usage/completion_tokens"),
-                        readInt(root, "/usage/total_tokens")
+                        readInt(root, "/usage/input_tokens"),
+                        readInt(root, "/usage/output_tokens"),
+                        sum(readInt(root, "/usage/input_tokens"), readInt(root, "/usage/output_tokens"))
                 ));
     }
 
@@ -105,36 +116,41 @@ public class KimiCodeplanProviderAdapter extends AbstractHttpProviderAdapter {
 
     @Override
     public List<ProviderModelDescriptor> listModels() {
-        try {
-            JsonNode root = getJson("/v1/models", Map.of("Authorization", "Bearer " + endpoint.apiKey()));
-            JsonNode data = root.path("data");
-            if (!data.isArray()) {
-                return List.of();
-            }
-            return java.util.stream.StreamSupport.stream(data.spliterator(), false)
-                    .map(node -> {
-                        String id = node.path("id").asText();
-                        return new ProviderModelDescriptor(
-                                providerId(),
-                                id,
-                                id,
-                                id,
-                                providerId(),
-                                true,
-                                true,
-                                true,
-                                true,
-                                false,
-                                10,
-                                inferContextWindow(id),
-                                inferInputCost(id),
-                                inferOutputCost(id)
-                        );
-                    })
-                    .toList();
-        } catch (WebClientResponseException ex) {
-            throw mapException(providerId(), ex);
-        }
+        // Kimi CodePlan uses fixed model list per openclaw reference
+        return List.of(
+                new ProviderModelDescriptor(
+                        providerId(),
+                        "kimi-code",
+                        "kimi-code",
+                        "Kimi Code",
+                        providerId(),
+                        true,
+                        true,
+                        true,
+                        true,
+                        false,
+                        10,
+                        262_144,
+                        0L,
+                        0L
+                ),
+                new ProviderModelDescriptor(
+                        providerId(),
+                        "k2p5",
+                        "k2p5",
+                        "Kimi Code (legacy model id)",
+                        providerId(),
+                        true,
+                        true,
+                        true,
+                        true,
+                        false,
+                        10,
+                        262_144,
+                        0L,
+                        0L
+                )
+        );
     }
 
     @Override
@@ -142,14 +158,16 @@ public class KimiCodeplanProviderAdapter extends AbstractHttpProviderAdapter {
         Map<String, Object> body = new HashMap<>();
         body.put("model", providerModel);
         body.put("messages", toMessagePayload(request.messages()));
+        body.put("max_tokens", request.max_tokens() == null ? 4096 : request.max_tokens());
         body.put("stream", true);
         if (request.temperature() != null) {
             body.put("temperature", request.temperature());
         }
-        if (request.max_tokens() != null) {
-            body.put("max_tokens", request.max_tokens());
-        }
-        streamOpenAiSse("/v1/chat/completions", Map.of("Authorization", "Bearer " + endpoint.apiKey()), body, consumer, providerId());
+        // Use Anthropic SSE format for streaming
+        streamAnthropicSse("v1/messages", Map.of(
+                "x-api-key", getApiKey(),
+                "anthropic-version", "2023-06-01",
+                "User-Agent", "Anthropic/JS 0.73.0"), body, consumer, providerId());
     }
 
     @Override
@@ -157,37 +175,22 @@ public class KimiCodeplanProviderAdapter extends AbstractHttpProviderAdapter {
         Map<String, Object> body = new HashMap<>();
         body.put("model", providerModel);
         body.put("messages", toMessagePayload(request.messages()));
+        body.put("max_tokens", request.max_tokens() == null ? 4096 : request.max_tokens());
         body.put("stream", true);
         if (request.temperature() != null) {
             body.put("temperature", request.temperature());
         }
-        if (request.max_tokens() != null) {
-            body.put("max_tokens", request.max_tokens());
-        }
-        return streamOpenAiSseAsync("/v1/chat/completions", Map.of("Authorization", "Bearer " + endpoint.apiKey()), body, providerId());
+        // Use Anthropic SSE format for streaming
+        return streamAnthropicSseAsync("v1/messages", Map.of(
+                "x-api-key", getApiKey(),
+                "anthropic-version", "2023-06-01",
+                "User-Agent", "Anthropic/JS 0.73.0"), body, providerId());
     }
 
-    private int inferContextWindow(String id) {
-        if (id.contains("128k") || id.contains("kimi-k2")) {
-            return 128_000;
+    private Integer sum(Integer a, Integer b) {
+        if (a == null && b == null) {
+            return null;
         }
-        if (id.contains("32k")) {
-            return 32_000;
-        }
-        return 128_000;
-    }
-
-    private long inferInputCost(String id) {
-        if (id.contains("kimi-k2")) {
-            return 8L;
-        }
-        return 6L;
-    }
-
-    private long inferOutputCost(String id) {
-        if (id.contains("kimi-k2")) {
-            return 32L;
-        }
-        return 18L;
+        return (a == null ? 0 : a) + (b == null ? 0 : b);
     }
 }

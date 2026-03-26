@@ -2,7 +2,7 @@ spring:
   application:
     name: llmgatejava
   datasource:
-    url: jdbc:h2:mem:llmgateway;MODE=PostgreSQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    url: jdbc:h2:file:~/llmgateway;MODE=PostgreSQL;AUTO_SERVER=TRUE
     username: sa
     password:
     driver-class-name: org.h2.Driver
@@ -37,7 +37,7 @@ llm:
       api-key: ${LLM_GATEWAY_SEED_API_KEY:test-api-key}
       name: ${LLM_GATEWAY_SEED_NAME:Seed key}
     providers:
-      mode: ${LLM_GATEWAY_PROVIDER_MODE:mock}
+      mode: ${LLM_GATEWAY_PROVIDER_MODE:real}
       openai:
         enabled: ${OPENAI_ENABLED:false}
         base-url: ${OPENAI_BASE_URL:https://api.openai.com}
@@ -56,7 +56,7 @@ llm:
         api-key: ${KIMI_API_KEY:dev-kimi-key}
       kimi-codeplan:
         enabled: ${KIMI_CODEPLAN_ENABLED:false}
-        base-url: ${KIMI_CODEPLAN_BASE_URL:https://api.kimi.com/coding}
+        base-url: ${KIMI_CODEPLAN_BASE_URL:https://api.kimi.com/coding/}
         api-key: ${KIMI_CODEPLAN_API_KEY:dev-kimi-codeplan-key}
     routing:
       failure-threshold: 1

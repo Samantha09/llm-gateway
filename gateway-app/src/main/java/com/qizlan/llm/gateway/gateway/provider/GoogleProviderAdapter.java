@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.qizlan.llm.gateway.config.GatewayProperties;
 import com.qizlan.llm.gateway.gateway.dto.ChatCompletionRequest;
 import com.qizlan.llm.gateway.gateway.dto.ImageDtos;
+import com.qizlan.llm.gateway.gateway.service.ProviderKeyService;
 import io.micrometer.tracing.Tracer;
 import java.time.Instant;
 import java.util.List;
@@ -18,11 +19,17 @@ import reactor.core.publisher.Mono;
 @Component
 public class GoogleProviderAdapter extends AbstractHttpProviderAdapter {
 
-    private final GatewayProperties.Endpoint endpoint;
+    private final ProviderKeyService providerKeyService;
 
-    public GoogleProviderAdapter(GatewayProperties properties, ObjectMapper objectMapper, Tracer tracer) {
+    public GoogleProviderAdapter(GatewayProperties properties, ObjectMapper objectMapper, Tracer tracer,
+                                 ProviderKeyService providerKeyService) {
         super(properties.providers().google().baseUrl(), objectMapper, tracer);
-        this.endpoint = properties.providers().google();
+        this.providerKeyService = providerKeyService;
+    }
+
+    private String getApiKey() {
+        return providerKeyService.getApiKey("google")
+                .orElseThrow(() -> new IllegalStateException("No API key configured for provider: google"));
     }
 
     @Override
@@ -33,7 +40,7 @@ public class GoogleProviderAdapter extends AbstractHttpProviderAdapter {
     @Override
     public ProviderChatResult complete(ChatCompletionRequest request, String providerModel) {
         try {
-            JsonNode root = postJson("/v1beta/models/" + providerModel + ":generateContent?key=" + endpoint.apiKey(), Map.of(), Map.of(
+            JsonNode root = postJson("/v1beta/models/" + providerModel + ":generateContent?key=" + getApiKey(), Map.of(), Map.of(
                     "contents", List.of(Map.of(
                             "role", "user",
                             "parts", List.of(Map.of("text", mergeContent(request)))
@@ -55,7 +62,7 @@ public class GoogleProviderAdapter extends AbstractHttpProviderAdapter {
 
     @Override
     public Mono<ProviderChatResult> completeAsync(ChatCompletionRequest request, String providerModel) {
-        return postJsonAsync("/v1beta/models/" + providerModel + ":generateContent?key=" + endpoint.apiKey(), Map.of(), Map.of(
+        return postJsonAsync("/v1beta/models/" + providerModel + ":generateContent?key=" + getApiKey(), Map.of(), Map.of(
                 "contents", List.of(Map.of(
                         "role", "user",
                         "parts", List.of(Map.of("text", mergeContent(request)))
@@ -74,7 +81,7 @@ public class GoogleProviderAdapter extends AbstractHttpProviderAdapter {
     @Override
     public ImageDtos.ImageResponse generateImage(ImageDtos.ImageGenerationRequest request, String providerModel) {
         try {
-            JsonNode root = postJson("/v1beta/models/" + providerModel + ":generateContent?key=" + endpoint.apiKey(), Map.of(), Map.of(
+            JsonNode root = postJson("/v1beta/models/" + providerModel + ":generateContent?key=" + getApiKey(), Map.of(), Map.of(
                     "contents", List.of(Map.of(
                             "role", "user",
                             "parts", List.of(Map.of("text", request.prompt()))
@@ -95,7 +102,7 @@ public class GoogleProviderAdapter extends AbstractHttpProviderAdapter {
 
     @Override
     public Mono<ImageDtos.ImageResponse> generateImageAsync(ImageDtos.ImageGenerationRequest request, String providerModel) {
-        return postJsonAsync("/v1beta/models/" + providerModel + ":generateContent?key=" + endpoint.apiKey(), Map.of(), Map.of(
+        return postJsonAsync("/v1beta/models/" + providerModel + ":generateContent?key=" + getApiKey(), Map.of(), Map.of(
                 "contents", List.of(Map.of(
                         "role", "user",
                         "parts", List.of(Map.of("text", request.prompt()))

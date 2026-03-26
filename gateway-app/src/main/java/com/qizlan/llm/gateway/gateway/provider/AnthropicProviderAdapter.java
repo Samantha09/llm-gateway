@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.qizlan.llm.gateway.config.GatewayProperties;
 import com.qizlan.llm.gateway.gateway.dto.ChatCompletionRequest;
 import com.qizlan.llm.gateway.gateway.dto.ImageDtos;
+import com.qizlan.llm.gateway.gateway.service.ProviderKeyService;
 import io.micrometer.tracing.Tracer;
 import java.util.List;
 import java.util.HashMap;
@@ -18,11 +19,17 @@ import reactor.core.publisher.Mono;
 @Component
 public class AnthropicProviderAdapter extends AbstractHttpProviderAdapter {
 
-    private final GatewayProperties.Endpoint endpoint;
+    private final ProviderKeyService providerKeyService;
 
-    public AnthropicProviderAdapter(GatewayProperties properties, ObjectMapper objectMapper, Tracer tracer) {
+    public AnthropicProviderAdapter(GatewayProperties properties, ObjectMapper objectMapper, Tracer tracer,
+                                    ProviderKeyService providerKeyService) {
         super(properties.providers().anthropic().baseUrl(), objectMapper, tracer);
-        this.endpoint = properties.providers().anthropic();
+        this.providerKeyService = providerKeyService;
+    }
+
+    private String getApiKey() {
+        return providerKeyService.getApiKey("anthropic")
+                .orElseThrow(() -> new IllegalStateException("No API key configured for provider: anthropic"));
     }
 
     @Override
@@ -41,7 +48,7 @@ public class AnthropicProviderAdapter extends AbstractHttpProviderAdapter {
             if (request.temperature() != null) {
                 body.put("temperature", request.temperature());
             }
-            JsonNode root = postJson("/v1/messages", Map.of("x-api-key", endpoint.apiKey(), "anthropic-version", "2023-06-01"), body);
+            JsonNode root = postJson("/v1/messages", Map.of("x-api-key", getApiKey(), "anthropic-version", "2023-06-01"), body);
             return new ProviderChatResult(
                     providerId(),
                     providerModel,
@@ -66,7 +73,7 @@ public class AnthropicProviderAdapter extends AbstractHttpProviderAdapter {
         if (request.temperature() != null) {
             body.put("temperature", request.temperature());
         }
-        return postJsonAsync("/v1/messages", Map.of("x-api-key", endpoint.apiKey(), "anthropic-version", "2023-06-01"), body)
+        return postJsonAsync("/v1/messages", Map.of("x-api-key", getApiKey(), "anthropic-version", "2023-06-01"), body)
                 .map(root -> new ProviderChatResult(
                         providerId(),
                         providerModel,
@@ -112,7 +119,7 @@ public class AnthropicProviderAdapter extends AbstractHttpProviderAdapter {
         if (request.temperature() != null) {
             body.put("temperature", request.temperature());
         }
-        streamAnthropicSse("/v1/messages", Map.of("x-api-key", endpoint.apiKey(), "anthropic-version", "2023-06-01"), body, consumer, providerId());
+        streamAnthropicSse("/v1/messages", Map.of("x-api-key", getApiKey(), "anthropic-version", "2023-06-01"), body, consumer, providerId());
     }
 
     @Override
@@ -125,6 +132,6 @@ public class AnthropicProviderAdapter extends AbstractHttpProviderAdapter {
         if (request.temperature() != null) {
             body.put("temperature", request.temperature());
         }
-        return streamAnthropicSseAsync("/v1/messages", Map.of("x-api-key", endpoint.apiKey(), "anthropic-version", "2023-06-01"), body, providerId());
+        return streamAnthropicSseAsync("/v1/messages", Map.of("x-api-key", getApiKey(), "anthropic-version", "2023-06-01"), body, providerId());
     }
 }

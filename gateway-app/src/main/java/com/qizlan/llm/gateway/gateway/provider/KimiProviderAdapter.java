@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.qizlan.llm.gateway.config.GatewayProperties;
 import com.qizlan.llm.gateway.gateway.dto.ChatCompletionRequest;
 import com.qizlan.llm.gateway.gateway.dto.ImageDtos;
+import com.qizlan.llm.gateway.gateway.service.ProviderKeyService;
 import io.micrometer.tracing.Tracer;
 import java.util.HashMap;
 import java.util.List;
@@ -18,11 +19,17 @@ import reactor.core.publisher.Mono;
 @Component
 public class KimiProviderAdapter extends AbstractHttpProviderAdapter {
 
-    private final GatewayProperties.Endpoint endpoint;
+    private final ProviderKeyService providerKeyService;
 
-    public KimiProviderAdapter(GatewayProperties properties, ObjectMapper objectMapper, Tracer tracer) {
+    public KimiProviderAdapter(GatewayProperties properties, ObjectMapper objectMapper, Tracer tracer,
+                               ProviderKeyService providerKeyService) {
         super(properties.providers().kimi().baseUrl(), objectMapper, tracer);
-        this.endpoint = properties.providers().kimi();
+        this.providerKeyService = providerKeyService;
+    }
+
+    private String getApiKey() {
+        return providerKeyService.getApiKey("kimi")
+                .orElseThrow(() -> new IllegalStateException("No API key configured for provider: kimi"));
     }
 
     @Override
@@ -43,7 +50,7 @@ public class KimiProviderAdapter extends AbstractHttpProviderAdapter {
             if (request.max_tokens() != null) {
                 body.put("max_tokens", request.max_tokens());
             }
-            JsonNode root = postJson("/v1/chat/completions", Map.of("Authorization", "Bearer " + endpoint.apiKey()), body);
+            JsonNode root = postJson("/v1/chat/completions", Map.of("Authorization", "Bearer " + getApiKey()), body);
             String content = readText(root, "/choices/0/message/content");
             return new ProviderChatResult(
                     providerId(),
@@ -71,7 +78,7 @@ public class KimiProviderAdapter extends AbstractHttpProviderAdapter {
         if (request.max_tokens() != null) {
             body.put("max_tokens", request.max_tokens());
         }
-        return postJsonAsync("/v1/chat/completions", Map.of("Authorization", "Bearer " + endpoint.apiKey()), body)
+        return postJsonAsync("/v1/chat/completions", Map.of("Authorization", "Bearer " + getApiKey()), body)
                 .map(root -> new ProviderChatResult(
                         providerId(),
                         providerModel,
@@ -106,7 +113,7 @@ public class KimiProviderAdapter extends AbstractHttpProviderAdapter {
     @Override
     public List<ProviderModelDescriptor> listModels() {
         try {
-            JsonNode root = getJson("/v1/models", Map.of("Authorization", "Bearer " + endpoint.apiKey()));
+            JsonNode root = getJson("/v1/models", Map.of("Authorization", "Bearer " + getApiKey()));
             JsonNode data = root.path("data");
             if (!data.isArray()) {
                 return List.of();
@@ -149,7 +156,7 @@ public class KimiProviderAdapter extends AbstractHttpProviderAdapter {
         if (request.max_tokens() != null) {
             body.put("max_tokens", request.max_tokens());
         }
-        streamOpenAiSse("/v1/chat/completions", Map.of("Authorization", "Bearer " + endpoint.apiKey()), body, consumer, providerId());
+        streamOpenAiSse("/v1/chat/completions", Map.of("Authorization", "Bearer " + getApiKey()), body, consumer, providerId());
     }
 
     @Override
@@ -164,7 +171,7 @@ public class KimiProviderAdapter extends AbstractHttpProviderAdapter {
         if (request.max_tokens() != null) {
             body.put("max_tokens", request.max_tokens());
         }
-        return streamOpenAiSseAsync("/v1/chat/completions", Map.of("Authorization", "Bearer " + endpoint.apiKey()), body, providerId());
+        return streamOpenAiSseAsync("/v1/chat/completions", Map.of("Authorization", "Bearer " + getApiKey()), body, providerId());
     }
 
     private int inferContextWindow(String id) {

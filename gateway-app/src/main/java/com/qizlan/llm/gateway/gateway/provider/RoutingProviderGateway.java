@@ -3,6 +3,7 @@ package com.qizlan.llm.gateway.gateway.provider;
 import com.qizlan.llm.gateway.config.GatewayProperties;
 import com.qizlan.llm.gateway.gateway.dto.ChatCompletionRequest;
 import com.qizlan.llm.gateway.gateway.dto.ImageDtos;
+import com.qizlan.llm.gateway.gateway.service.ProviderKeyService;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
@@ -17,11 +18,14 @@ public class RoutingProviderGateway implements ProviderGateway {
     private final Map<String, ProviderAdapter> adapters;
     private final MockProviderAdapter mockProviderAdapter;
     private final GatewayProperties properties;
+    private final ProviderKeyService providerKeyService;
 
-    public RoutingProviderGateway(List<ProviderAdapter> adapters, MockProviderAdapter mockProviderAdapter, GatewayProperties properties) {
+    public RoutingProviderGateway(List<ProviderAdapter> adapters, MockProviderAdapter mockProviderAdapter,
+                                  GatewayProperties properties, ProviderKeyService providerKeyService) {
         this.adapters = adapters.stream().collect(java.util.stream.Collectors.toMap(ProviderAdapter::providerId, adapter -> adapter));
         this.mockProviderAdapter = mockProviderAdapter;
         this.properties = properties;
+        this.providerKeyService = providerKeyService;
     }
 
     @Override
@@ -38,7 +42,10 @@ public class RoutingProviderGateway implements ProviderGateway {
             return mockProviderAdapter.completeAsync(request, providerModel)
                     .contextWrite(ctx -> ctx.put("PROVIDER_ID", providerId));
         }
-        return isEnabled(providerId) ? select(providerId).completeAsync(request, providerModel) : mockProviderAdapter.completeAsync(request, providerModel);
+        if (isEnabled(providerId)) {
+            return select(providerId).completeAsync(request, providerModel);
+        }
+        return mockProviderAdapter.completeAsync(request, providerModel);
     }
 
     @Override
@@ -55,7 +62,10 @@ public class RoutingProviderGateway implements ProviderGateway {
             return mockProviderAdapter.generateImageAsync(request, providerModel)
                     .contextWrite(ctx -> ctx.put("PROVIDER_ID", providerId));
         }
-        return isEnabled(providerId) ? select(providerId).generateImageAsync(request, providerModel) : mockProviderAdapter.generateImageAsync(request, providerModel);
+        if (isEnabled(providerId)) {
+            return select(providerId).generateImageAsync(request, providerModel);
+        }
+        return mockProviderAdapter.generateImageAsync(request, providerModel);
     }
 
     @Override
@@ -72,7 +82,10 @@ public class RoutingProviderGateway implements ProviderGateway {
             return mockProviderAdapter.editImageAsync(request, providerModel)
                     .contextWrite(ctx -> ctx.put("PROVIDER_ID", providerId));
         }
-        return isEnabled(providerId) ? select(providerId).editImageAsync(request, providerModel) : mockProviderAdapter.editImageAsync(request, providerModel);
+        if (isEnabled(providerId)) {
+            return select(providerId).editImageAsync(request, providerModel);
+        }
+        return mockProviderAdapter.editImageAsync(request, providerModel);
     }
 
     @Override
@@ -93,7 +106,10 @@ public class RoutingProviderGateway implements ProviderGateway {
             return mockProviderAdapter.streamChatAsync(request, providerModel, format)
                     .contextWrite(ctx -> ctx.put("PROVIDER_ID", providerId));
         }
-        return isEnabled(providerId) ? select(providerId).streamChatAsync(request, providerModel, format) : mockProviderAdapter.streamChatAsync(request, providerModel, format);
+        if (isEnabled(providerId)) {
+            return select(providerId).streamChatAsync(request, providerModel, format);
+        }
+        return mockProviderAdapter.streamChatAsync(request, providerModel, format);
     }
 
     private <T> T resolve(String providerId, Supplier<T> realCall, Supplier<T> mockCall) {
@@ -112,13 +128,6 @@ public class RoutingProviderGateway implements ProviderGateway {
     }
 
     private boolean isEnabled(String providerId) {
-        return switch (providerId) {
-            case "openai" -> properties.providers().openai().enabled();
-            case "anthropic" -> properties.providers().anthropic().enabled();
-            case "google" -> properties.providers().google().enabled();
-            case "kimi" -> properties.providers().kimi().enabled();
-            case "kimi-codeplan" -> properties.providers().kimiCodeplan().enabled();
-            default -> false;
-        };
+        return providerKeyService.isEnabled(providerId);
     }
 }
